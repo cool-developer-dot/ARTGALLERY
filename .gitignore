@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+public/noir-gallery-brand.png
+public/next.svg
+public/vercel.svg
 
 # debug
 npm-debug.log*
