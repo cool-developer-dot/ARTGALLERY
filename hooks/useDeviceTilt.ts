@@ -5,9 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /** Normalized tilt: -1 (left/up) to 1 (right/down) */
 export type Tilt = { x: number; y: number };
 
-const GAMMA_SENS = 0.045;
-const BETA_SENS = 0.04;
-const SMOOTH = 0.45;
+const GAMMA_SENS = 0.065;
+const BETA_SENS = 0.055;
+const SMOOTH = 0.62;
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
@@ -21,6 +21,7 @@ export function useDeviceTilt(
   const [permissionGranted, setPermissionGranted] = useState(false);
   const onTiltRef = useRef(onTilt);
   const baseline = useRef<{ beta: number; gamma: number } | null>(null);
+  const raw = useRef<{ beta: number; gamma: number } | null>(null);
   const target = useRef<Tilt>({ x: 0, y: 0 });
   const smooth = useRef<Tilt>({ x: 0, y: 0 });
   const raf = useRef<number | null>(null);
@@ -51,10 +52,21 @@ export function useDeviceTilt(
   }, []);
 
   const calibrate = useCallback(() => {
-    baseline.current = null;
+    baseline.current = raw.current
+      ? { beta: raw.current.beta, gamma: raw.current.gamma }
+      : null;
     target.current = { x: 0, y: 0 };
     smooth.current = { x: 0, y: 0 };
     onTiltRef.current?.({ x: 0, y: 0 });
+  }, []);
+
+  /** Re-center after a navigation so held tilt does not block the next move */
+  const snapBaseline = useCallback(() => {
+    if (raw.current) {
+      baseline.current = { beta: raw.current.beta, gamma: raw.current.gamma };
+    }
+    target.current = { x: 0, y: 0 };
+    smooth.current = { x: 0, y: 0 };
   }, []);
 
   useEffect(() => {
@@ -77,6 +89,7 @@ export function useDeviceTilt(
 
     const handler = (e: DeviceOrientationEvent) => {
       if (e.beta == null || e.gamma == null) return;
+      raw.current = { beta: e.beta, gamma: e.gamma };
       if (!baseline.current) {
         baseline.current = { beta: e.beta, gamma: e.gamma };
       }
@@ -97,5 +110,5 @@ export function useDeviceTilt(
     };
   }, [enabled, permissionGranted]);
 
-  return { supported, permissionGranted, requestPermission, calibrate };
+  return { supported, permissionGranted, requestPermission, calibrate, snapBaseline };
 }

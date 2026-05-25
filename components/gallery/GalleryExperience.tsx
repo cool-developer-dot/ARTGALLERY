@@ -38,24 +38,42 @@ export function GalleryExperience() {
     ready: speedReady,
   } = useGallerySpeed();
 
+  const snapBaselineRef = useRef<() => void>(() => {});
+
   const {
     artwork: spatialArtwork,
     position: spatialPosition,
     direction: spatialDirection,
     index: spatialIndex,
+    tiltPreview,
     handleTilt,
+    go: goSpatial,
     reset: resetSpatial,
-  } = useSpatialGalleryNav(hSpeed, vSpeed, isTouchTablet && motionEnabled);
-
-  const onTilt = useCallback(
-    (t: { x: number; y: number }) => {
-      handleTilt(t);
-    },
-    [handleTilt],
+  } = useSpatialGalleryNav(
+    hSpeed,
+    vSpeed,
+    isTouchTablet && motionEnabled,
+    () => snapBaselineRef.current(),
   );
 
-  const { supported: tiltSupported, requestPermission, calibrate } =
+  const tiltHandlerRef = useRef(handleTilt);
+  tiltHandlerRef.current = handleTilt;
+
+  const onTilt = useCallback((t: { x: number; y: number }) => {
+    tiltHandlerRef.current(t);
+  }, []);
+
+  const { supported: tiltSupported, requestPermission, calibrate, snapBaseline } =
     useDeviceTilt(isTouchTablet && motionEnabled, onTilt);
+
+  snapBaselineRef.current = snapBaseline;
+
+  const onNavigate = useCallback(
+    (dir: Parameters<typeof goSpatial>[0]) => {
+      goSpatial(dir);
+    },
+    [goSpatial],
+  );
 
   const sceneZoom = useSpring(1, galleryZoomSpring);
   const parallaxX = useSpring(0, artworkSpring);
@@ -121,7 +139,7 @@ export function GalleryExperience() {
         <h1 className="type-display text-balance">Enter the collection</h1>
         <p className="mx-auto mt-3 max-w-md text-sm text-stone-body">
           {isTouchTablet
-            ? "Tilt to browse · One work at a time · Pinch to zoom"
+            ? "Swipe or tilt to browse · Pinch to zoom"
             : "Move cursor to explore · Pinch trackpad or Ctrl+scroll to zoom"}
         </p>
       </div>
@@ -203,7 +221,13 @@ export function GalleryExperience() {
                   direction={spatialDirection}
                   row={spatialPosition.row}
                   col={spatialPosition.col}
+                  tilt={tiltPreview}
+                  canGoLeft={spatialPosition.col > 0}
+                  canGoRight={spatialPosition.col < 2}
+                  canGoUp={spatialPosition.row > 0}
+                  canGoDown={spatialPosition.row < 2}
                   onOpen={() => setSelected(spatialArtwork)}
+                  onNavigate={onNavigate}
                 />
               ) : (
                 <div
