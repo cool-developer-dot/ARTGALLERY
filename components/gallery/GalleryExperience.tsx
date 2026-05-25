@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { motion, useSpring } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArtworkDetail } from "@/components/gallery/ArtworkDetail";
@@ -8,17 +8,16 @@ import { GalleryArtworkSlot } from "@/components/gallery/GalleryArtworkSlot";
 import { GalleryAtmosphere } from "@/components/gallery/GalleryAtmosphere";
 import { GalleryLight } from "@/components/gallery/GalleryLight";
 import { GalleryMotionRails } from "@/components/gallery/GalleryMotionRails";
-import { GalleryRoomGrid } from "@/components/gallery/GalleryRoomGrid";
-import { GalleryTiltProvider } from "@/components/gallery/GalleryTiltContext";
-import { useDeviceTilt, type Tilt } from "@/hooks/useDeviceTilt";
+import { GallerySpatialViewer } from "@/components/gallery/GallerySpatialViewer";
+import { useDeviceTilt } from "@/hooks/useDeviceTilt";
 import { useGallerySpeed } from "@/hooks/useGallerySpeed";
 import { usePinchZoom } from "@/hooks/usePinchZoom";
+import { useSpatialGalleryNav } from "@/hooks/useSpatialGalleryNav";
 import { useWheelZoom } from "@/hooks/useWheelZoom";
 import { usePointerDepth } from "@/hooks/usePointerDepth";
 import { useTouchTablet } from "@/hooks/useTouchTablet";
 import {
   galleryDesktopRows,
-  galleryRoomGrid,
   type GalleryArtwork,
 } from "@/lib/galleryArtworks";
 import { artworkSpring, galleryZoomSpring } from "@/lib/motion";
@@ -26,14 +25,10 @@ import { artworkSpring, galleryZoomSpring } from "@/lib/motion";
 export function GalleryExperience() {
   const isTouchTablet = useTouchTablet();
   const sceneRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
 
   const [motionEnabled, setMotionEnabled] = useState(false);
   const [needsTiltPermission, setNeedsTiltPermission] = useState(false);
   const [selected, setSelected] = useState<GalleryArtwork | null>(null);
-
-  const tiltX = useMotionValue(0);
-  const tiltY = useMotionValue(0);
 
   const {
     horizontal: hSpeed,
@@ -43,21 +38,29 @@ export function GalleryExperience() {
     ready: speedReady,
   } = useGallerySpeed();
 
-  const sceneZoom = useSpring(1, galleryZoomSpring);
-  const parallaxX = useSpring(0, artworkSpring);
-  const parallaxY = useSpring(0, artworkSpring);
-  const pointer = usePointerDepth(!isTouchTablet);
+  const {
+    artwork: spatialArtwork,
+    position: spatialPosition,
+    direction: spatialDirection,
+    index: spatialIndex,
+    handleTilt,
+    reset: resetSpatial,
+  } = useSpatialGalleryNav(hSpeed, vSpeed, isTouchTablet && motionEnabled);
 
   const onTilt = useCallback(
-    (t: Tilt) => {
-      tiltX.set(t.x);
-      tiltY.set(t.y);
+    (t: { x: number; y: number }) => {
+      handleTilt(t);
     },
-    [tiltX, tiltY],
+    [handleTilt],
   );
 
   const { supported: tiltSupported, requestPermission, calibrate } =
     useDeviceTilt(isTouchTablet && motionEnabled, onTilt);
+
+  const sceneZoom = useSpring(1, galleryZoomSpring);
+  const parallaxX = useSpring(0, artworkSpring);
+  const parallaxY = useSpring(0, artworkSpring);
+  const pointer = usePointerDepth(!isTouchTablet);
 
   const { zoom: pinchZoom } = usePinchZoom(isTouchTablet, sceneRef);
   const { zoom: wheelZoom } = useWheelZoom(!isTouchTablet, sceneRef);
@@ -86,15 +89,12 @@ export function GalleryExperience() {
   const enableMotion = useCallback(async () => {
     if (tiltSupported) await requestPermission();
     calibrate();
+    resetSpatial();
     setMotionEnabled(true);
-  }, [tiltSupported, requestPermission, calibrate]);
+  }, [tiltSupported, requestPermission, calibrate, resetSpatial]);
 
   const [rowTop, rowBottom, rowCenter] = galleryDesktopRows;
   let slotIndex = 0;
-
-  const roomContent = (
-    <GalleryRoomGrid artworks={galleryRoomGrid} onSelect={setSelected} />
-  );
 
   return (
     <div
@@ -121,7 +121,7 @@ export function GalleryExperience() {
         <h1 className="type-display text-balance">Enter the collection</h1>
         <p className="mx-auto mt-3 max-w-md text-sm text-stone-body">
           {isTouchTablet
-            ? "Tilt — each work moves on its own · Rails set speed · Pinch to zoom"
+            ? "Tilt to browse · One work at a time · Pinch to zoom"
             : "Move cursor to explore · Pinch trackpad or Ctrl+scroll to zoom"}
         </p>
       </div>
@@ -138,10 +138,11 @@ export function GalleryExperience() {
       {isTouchTablet && needsTiltPermission && tiltSupported && !motionEnabled && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-bg-deep/90 p-6">
           <div className="glass-panel max-w-sm p-8 text-center">
-            <p className="type-display-sm">Tilt to explore</p>
+            <p className="type-display-sm">Browse the collection</p>
             <p className="mt-4 text-sm text-stone-body">
-              Each artwork drifts independently as you tilt. Use the rails to
-              control horizontal and vertical speed. Pinch to zoom.
+              One artwork fills the screen. Tilt left, right, up, or down to
+              move through the gallery. Adjust speed on the side rails. Pinch to
+              zoom.
             </p>
             <button
               type="button"
@@ -170,29 +171,26 @@ export function GalleryExperience() {
         }
         style={
           isTouchTablet
-            ? { perspective: "1100px", perspectiveOrigin: "50% 45%" }
+            ? undefined
             : { perspective: "1400px", perspectiveOrigin: "50% 30%" }
         }
       >
         <div
-          ref={viewportRef}
           className={
             isTouchTablet
-              ? "gallery-viewport gallery-viewport--float relative flex h-full w-full items-center justify-center overflow-hidden"
+              ? "gallery-viewport gallery-viewport--spatial relative flex h-full w-full items-center justify-center overflow-hidden"
               : "site-container relative"
           }
         >
           <motion.div
-            className="relative will-change-transform"
+            className="relative w-full will-change-transform"
             style={{
               scale: sceneZoom,
               transformStyle: "preserve-3d",
-              ...(isTouchTablet
-                ? {}
-                : { x: parallaxX, y: parallaxY }),
+              ...(isTouchTablet ? {} : { x: parallaxX, y: parallaxY }),
             }}
           >
-            <div className={isTouchTablet ? "relative" : "relative min-h-[70vh]"}>
+            <div className={isTouchTablet ? "relative w-full" : "relative min-h-[70vh]"}>
               <GalleryLight
                 parallaxX={isTouchTablet ? 0 : pointer.x}
                 parallaxY={isTouchTablet ? 0 : pointer.y}
@@ -200,14 +198,13 @@ export function GalleryExperience() {
               <GalleryAtmosphere />
 
               {isTouchTablet ? (
-                <GalleryTiltProvider
-                  tiltX={tiltX}
-                  tiltY={tiltY}
-                  horizontalSpeed={hSpeed}
-                  verticalSpeed={vSpeed}
-                >
-                  {roomContent}
-                </GalleryTiltProvider>
+                <GallerySpatialViewer
+                  artwork={spatialArtwork}
+                  direction={spatialDirection}
+                  row={spatialPosition.row}
+                  col={spatialPosition.col}
+                  onOpen={() => setSelected(spatialArtwork)}
+                />
               ) : (
                 <div
                   className="relative flex flex-col gap-16 sm:gap-20 md:gap-28"
@@ -274,7 +271,7 @@ export function GalleryExperience() {
       >
         <p className="type-caption glass-panel px-4 py-2">
           {isTouchTablet
-            ? `${Math.round(zoom * 100)}% · 9 works · H ${hSpeed.toFixed(1)}× · V ${vSpeed.toFixed(1)}×`
+            ? `${Math.round(zoom * 100)}% · ${spatialIndex}/9 · H ${hSpeed.toFixed(1)}× · V ${vSpeed.toFixed(1)}×`
             : `${Math.round(zoom * 100)}% zoom · 9 works`}
         </p>
       </div>

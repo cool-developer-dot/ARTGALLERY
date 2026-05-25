@@ -18,6 +18,8 @@ export type GalleryArtwork = {
   layout: ArtworkLayout;
 };
 
+export type SpatialDirection = "left" | "right" | "up" | "down";
+
 export const featuredArtworks: GalleryArtwork[] = [
   {
     id: "neural-bloom",
@@ -28,7 +30,7 @@ export const featuredArtworks: GalleryArtwork[] = [
     description:
       "Procedural flora emerges from silence—each petal a computed breath between nature and machine intelligence.",
     image: images.featureNavigation,
-    layout: { row: 0, col: 0, z: 0.72, rotate: -1.5 },
+    layout: { row: 0, col: 0, z: 0.7, rotate: -2 },
   },
   {
     id: "chromatic-drift",
@@ -39,7 +41,7 @@ export const featuredArtworks: GalleryArtwork[] = [
     description:
       "Color fields migrate across an infinite canvas, never repeating, always dissolving into the next temporal state.",
     image: images.featureCollections,
-    layout: { row: 0, col: 1, z: 0.58, rotate: 0 },
+    layout: { row: 0, col: 1, z: 0.5, rotate: 0 },
   },
   {
     id: "luminous-horizon",
@@ -50,7 +52,7 @@ export const featuredArtworks: GalleryArtwork[] = [
     description:
       "A horizon line that exists only in photons—viewers stand at the threshold between observation and embodiment.",
     image: images.exhibition,
-    layout: { row: 0, col: 2, z: 0.65, rotate: 1.5 },
+    layout: { row: 0, col: 2, z: 0.65, rotate: 2 },
   },
   {
     id: "void-sculpture",
@@ -61,7 +63,7 @@ export const featuredArtworks: GalleryArtwork[] = [
     description:
       "Classical form hollowed by digital erosion—the absence becomes the monument.",
     image: images.featureStorytelling,
-    layout: { row: 1, col: 0, z: 0.42, rotate: -2 },
+    layout: { row: 1, col: 0, z: 0.35, rotate: -3 },
   },
   {
     id: "digital-futures",
@@ -72,7 +74,7 @@ export const featuredArtworks: GalleryArtwork[] = [
     description:
       "Terrain generated from latent space—mountains of data rendered as geological memory.",
     image: images.digitalFutures,
-    layout: { row: 1, col: 1, z: 0.55, rotate: 0 },
+    layout: { row: 1, col: 1, z: 0.55, rotate: 1 },
   },
   {
     id: "abstract-echo",
@@ -83,7 +85,7 @@ export const featuredArtworks: GalleryArtwork[] = [
     description:
       "Gestural marks translated through centuries of art history, then released into pure computational form.",
     image: images.abstractArt,
-    layout: { row: 1, col: 2, z: 0.48, rotate: 2 },
+    layout: { row: 1, col: 2, z: 0.4, rotate: 3 },
   },
   {
     id: "renaissance-light",
@@ -120,13 +122,26 @@ export const featuredArtworks: GalleryArtwork[] = [
   },
 ];
 
-/** 3×3 room grid — phones through tablets */
+/** 3×3 matrix for spatial navigation (row → col) */
+export const spatialGalleryGrid: GalleryArtwork[][] = [0, 1, 2].map((row) =>
+  [0, 1, 2].map(
+    (col) =>
+      featuredArtworks.find(
+        (a) => a.layout.row === row && a.layout.col === col,
+      )!,
+  ),
+);
+
 export const galleryRoomGrid: GalleryArtwork[] = [...featuredArtworks].sort(
   (a, b) =>
     a.layout.row - b.layout.row || a.layout.col - b.layout.col,
 );
 
-/** Desktop: two rows of three + featured center (legacy layout) */
+export function getSpatialIndex(row: number, col: number) {
+  return row * 3 + col + 1;
+}
+
+/** Desktop: two rows of three + featured center */
 export const galleryDesktopRows = [
   galleryRoomGrid.filter((a) => a.layout.row === 0),
   galleryRoomGrid.filter((a) => a.layout.row === 1),

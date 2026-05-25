@@ -353,13 +353,110 @@ body {
   transition: filter 0.4s ease;
 }
 
-.gallery-viewport--float {
-  perspective: 1100px;
-  perspective-origin: 50% 45%;
+.gallery-viewport--spatial {
+  padding-inline: 0.5rem;
 }
 
-.gallery-room {
-  transform-style: preserve-3d;
+/* ——— Spatial viewer: one work at a time ——— */
+
+.gallery-spatial-viewer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: min(22rem, calc(100vw - var(--gallery-v-rail) - 1.5rem));
+  margin-inline: auto;
+  padding-block: 0.5rem 0.25rem;
+  min-height: min(72vh, 640px);
+}
+
+.gallery-spatial-viewer__index {
+  margin-bottom: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gallery-spatial-viewer__stage {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.gallery-spatial-viewer__frame {
+  cursor: pointer;
+  filter: drop-shadow(0 20px 48px rgba(0, 0, 0, 0.5));
+}
+
+.gallery-spatial-viewer__image {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.gallery-spatial-viewer__meta {
+  width: 100%;
+  margin-top: 1.25rem;
+  padding-inline: 0.5rem;
+}
+
+.gallery-spatial-viewer__hints {
+  position: absolute;
+  inset: 12% 0 28%;
+  z-index: 0;
+}
+
+.gallery-spatial-viewer__hints .hint {
+  position: absolute;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: rgba(244, 241, 234, 0.12);
+}
+
+.gallery-spatial-viewer__hints .hint--up {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.gallery-spatial-viewer__hints .hint--down {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.gallery-spatial-viewer__hints .hint--left {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.gallery-spatial-viewer__hints .hint--right {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.gallery-spatial-map {
+  display: grid;
+  grid-template-columns: repeat(3, 6px);
+  gap: 5px;
+  margin-bottom: 1rem;
+}
+
+.gallery-spatial-map__cell {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.35s ease, transform 0.35s ease;
+}
+
+.gallery-spatial-map__cell.is-active {
+  background: rgba(244, 241, 234, 0.85);
+  transform: scale(1.35);
+  box-shadow: 0 0 8px rgba(244, 241, 234, 0.25);
 }
 
 /* Motion speed rails — phones through tablets */
