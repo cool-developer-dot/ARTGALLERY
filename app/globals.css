@@ -216,6 +216,10 @@ body {
   -webkit-backface-visibility: hidden;
 }
 
+.gallery-scene {
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
 .glass-panel {
   background: var(--glass);
   backdrop-filter: blur(24px);

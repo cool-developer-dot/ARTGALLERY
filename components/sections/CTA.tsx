@@ -50,7 +50,7 @@ export function CTA() {
           >
             <Button
               variant="primary"
-              href="#gallery"
+              href="/gallery"
               className="w-full justify-center sm:w-auto sm:min-w-[11rem]"
             >
               Enter gallery

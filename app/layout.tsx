@@ -19,7 +19,16 @@ const inter = Inter({
   adjustFontFallback: true,
 });
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://artgallery.vercel.app",
+  ),
   title: "Atelier — Virtual Art Gallery",
   description:
     "A cinematic virtual museum where technology, architecture, and artistic expression converge.",

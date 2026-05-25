@@ -113,7 +113,7 @@ export function Hero() {
             >
               <Button
                 variant="primary"
-                href="#gallery"
+                href="/gallery"
                 className="w-full sm:w-auto justify-center"
               >
                 Explore gallery

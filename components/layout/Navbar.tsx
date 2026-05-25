@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useState } from "react";
 
 const navLinks = [
-  { label: "Gallery", href: "#gallery" },
+  { label: "Gallery", href: "/gallery" },
   { label: "Experience", href: "#experience" },
   { label: "Artists", href: "#artists" },
   { label: "Exhibitions", href: "#exhibition" },
@@ -33,7 +33,7 @@ export function Navbar() {
       />
 
       <nav className="site-container relative flex items-center justify-between py-5 sm:py-6">
-        <a href="#" className="group flex items-center gap-3">
+        <a href="/" className="group flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center border border-white/15 transition-colors group-hover:border-white/30">
             <span className="font-display text-base text-ivory">A</span>
           </div>
@@ -63,7 +63,7 @@ export function Navbar() {
             Sign in
           </a>
           <a
-            href="#cta"
+            href="/gallery"
             className="border border-white/15 px-5 py-2.5 text-sm text-ivory transition-all hover:border-white/30 hover:bg-white/[0.04]"
           >
             Enter gallery
@@ -108,7 +108,7 @@ export function Navbar() {
           ))}
           <li>
             <a
-              href="#cta"
+              href="/gallery"
               onClick={() => setOpen(false)}
               className="inline-block border border-white/15 px-5 py-3 text-sm text-ivory"
             >

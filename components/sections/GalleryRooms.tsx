@@ -48,7 +48,7 @@ export function GalleryRooms() {
               className={`min-w-0 ${index % 3 === 0 ? "sm:col-span-2" : ""}`}
             >
               <ArtworkFrame
-                href="#"
+                href="/gallery"
                 src={room.image}
                 alt={room.title}
                 sizes={
