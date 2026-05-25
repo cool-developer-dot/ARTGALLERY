@@ -1,15 +1,16 @@
 "use client";
 
 import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
-
-const MIN_ZOOM = 0.85;
-const MAX_ZOOM = 1.45;
+import {
+  clampZoom,
+  GALLERY_ZOOM_DEFAULT,
+} from "@/lib/galleryMotion";
 
 export function usePinchZoom(
   enabled: boolean,
   containerRef: RefObject<HTMLElement | null>,
 ) {
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(GALLERY_ZOOM_DEFAULT);
   const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
 
   const getDistance = (touches: TouchList) => {
@@ -31,9 +32,7 @@ export function usePinchZoom(
       e.preventDefault();
       const distance = getDistance(e.touches);
       const scale = distance / pinchRef.current.distance;
-      setZoom(
-        Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, pinchRef.current.zoom * scale)),
-      );
+      setZoom(clampZoom(pinchRef.current.zoom * scale));
     },
     [enabled],
   );
@@ -49,10 +48,12 @@ export function usePinchZoom(
     el.addEventListener("touchstart", onTouchStart, { passive: true });
     el.addEventListener("touchmove", onTouchMove, { passive: false });
     el.addEventListener("touchend", onTouchEnd);
+    el.addEventListener("touchcancel", onTouchEnd);
     return () => {
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
     };
   }, [enabled, containerRef, onTouchStart, onTouchMove, onTouchEnd]);
 

@@ -18,15 +18,18 @@ interface GalleryArtworkCardProps {
   src: string;
   alt: string;
   onSelect: () => void;
+  disableTilt?: boolean;
 }
 
 export function GalleryArtworkCard({
   src,
   alt,
   onSelect,
+  disableTilt = false,
 }: GalleryArtworkCardProps) {
   const ref = useRef<HTMLButtonElement>(null);
-  const { premium, premiumTilt } = useArtworkCapabilities();
+  const { premium, premiumTilt: canTilt } = useArtworkCapabilities();
+  const premiumTilt = !disableTilt && canTilt;
   const [hovered, setHovered] = useState(false);
   const [sweepKey, setSweepKey] = useState(0);
 

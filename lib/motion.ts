@@ -7,6 +7,18 @@ export const artworkSpring = {
   mass: 0.8,
 } as const;
 
+export const galleryPanSpring = {
+  stiffness: 400,
+  damping: 36,
+  mass: 0.35,
+} as const;
+
+export const galleryZoomSpring = {
+  stiffness: 460,
+  damping: 40,
+  mass: 0.3,
+} as const;
+
 export const artworkZoomEase = [0.22, 1, 0.36, 1] as const;
 
 export const fadeUp = {

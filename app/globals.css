@@ -216,8 +216,109 @@ body {
   -webkit-backface-visibility: hidden;
 }
 
-.gallery-scene {
-  touch-action: pan-x pan-y pinch-zoom;
+.gallery-page {
+  overscroll-behavior: none;
+}
+
+.gallery-scene,
+.gallery-viewport {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+@media (min-width: 1024px) {
+  .gallery-scene--desktop-zoom {
+    touch-action: auto;
+  }
+}
+
+/* Motion speed rails — phones through tablets */
+.gallery-speed-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.gallery-speed-slider:focus-visible {
+  outline: 1px solid rgba(244, 241, 234, 0.35);
+  outline-offset: 3px;
+}
+
+.gallery-speed-slider--horizontal {
+  height: 1.25rem;
+  width: 100%;
+}
+
+.gallery-speed-slider--vertical {
+  width: 1.25rem;
+  height: min(12rem, 42vh);
+  writing-mode: vertical-lr;
+  direction: rtl;
+}
+
+.gallery-speed-slider::-webkit-slider-runnable-track {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.gallery-speed-slider--horizontal::-webkit-slider-runnable-track {
+  height: 3px;
+}
+
+.gallery-speed-slider--vertical::-webkit-slider-runnable-track {
+  width: 3px;
+}
+
+.gallery-speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 241, 234, 0.35);
+  background: rgba(244, 241, 234, 0.92);
+  box-shadow: 0 0 12px rgba(244, 241, 234, 0.2);
+}
+
+.gallery-speed-slider--horizontal::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-top: -6px;
+}
+
+.gallery-speed-slider--vertical::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-left: -6px;
+}
+
+.gallery-speed-slider::-moz-range-track {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.gallery-speed-slider--horizontal::-moz-range-track {
+  height: 3px;
+}
+
+.gallery-speed-slider--vertical::-moz-range-track {
+  width: 3px;
+}
+
+.gallery-speed-slider::-moz-range-thumb {
+  border-radius: 50%;
+  border: 1px solid rgba(244, 241, 234, 0.35);
+  background: rgba(244, 241, 234, 0.92);
+  box-shadow: 0 0 12px rgba(244, 241, 234, 0.2);
+}
+
+.gallery-speed-slider--horizontal::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+}
+
+.gallery-speed-slider--vertical::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
 }
 
 .glass-panel {
