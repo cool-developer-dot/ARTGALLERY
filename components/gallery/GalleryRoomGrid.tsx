@@ -29,6 +29,7 @@ export function GalleryRoomGrid({ artworks, onSelect }: GalleryRoomGridProps) {
               art={art}
               index={index}
               compact
+              floatIndependently
               onSelect={() => onSelect(art)}
               disableCardTilt
             />

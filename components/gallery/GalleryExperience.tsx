@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useSpring } from "framer-motion";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArtworkDetail } from "@/components/gallery/ArtworkDetail";
@@ -8,30 +8,32 @@ import { GalleryArtworkSlot } from "@/components/gallery/GalleryArtworkSlot";
 import { GalleryAtmosphere } from "@/components/gallery/GalleryAtmosphere";
 import { GalleryLight } from "@/components/gallery/GalleryLight";
 import { GalleryMotionRails } from "@/components/gallery/GalleryMotionRails";
+import { GalleryRoomGrid } from "@/components/gallery/GalleryRoomGrid";
+import { GalleryTiltProvider } from "@/components/gallery/GalleryTiltContext";
 import { useDeviceTilt, type Tilt } from "@/hooks/useDeviceTilt";
-import { useGalleryPanLimits } from "@/hooks/useGalleryPanLimits";
 import { useGallerySpeed } from "@/hooks/useGallerySpeed";
 import { usePinchZoom } from "@/hooks/usePinchZoom";
 import { useWheelZoom } from "@/hooks/useWheelZoom";
 import { usePointerDepth } from "@/hooks/usePointerDepth";
 import { useTouchTablet } from "@/hooks/useTouchTablet";
-import { GalleryRoomGrid } from "@/components/gallery/GalleryRoomGrid";
 import {
   galleryDesktopRows,
   galleryRoomGrid,
   type GalleryArtwork,
 } from "@/lib/galleryArtworks";
-import { artworkSpring, galleryPanSpring, galleryZoomSpring } from "@/lib/motion";
+import { artworkSpring, galleryZoomSpring } from "@/lib/motion";
 
 export function GalleryExperience() {
   const isTouchTablet = useTouchTablet();
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   const [motionEnabled, setMotionEnabled] = useState(false);
   const [needsTiltPermission, setNeedsTiltPermission] = useState(false);
   const [selected, setSelected] = useState<GalleryArtwork | null>(null);
+
+  const tiltX = useMotionValue(0);
+  const tiltY = useMotionValue(0);
 
   const {
     horizontal: hSpeed,
@@ -41,37 +43,18 @@ export function GalleryExperience() {
     ready: speedReady,
   } = useGallerySpeed();
 
-  const speedRef = useRef({ h: 1, v: 1 });
-  speedRef.current = { h: hSpeed, v: vSpeed };
-
-  const tiltRef = useRef<Tilt>({ x: 0, y: 0 });
-  const limitsRef = useRef({ x: 0, y: 0 });
-  const limits = useGalleryPanLimits(viewportRef, canvasRef, isTouchTablet);
-  limitsRef.current = limits;
-
-  const panX = useSpring(0, galleryPanSpring);
-  const panY = useSpring(0, galleryPanSpring);
   const sceneZoom = useSpring(1, galleryZoomSpring);
-
   const parallaxX = useSpring(0, artworkSpring);
   const parallaxY = useSpring(0, artworkSpring);
   const pointer = usePointerDepth(!isTouchTablet);
 
   const onTilt = useCallback(
     (t: Tilt) => {
-      tiltRef.current = t;
-      panX.set(t.x * limitsRef.current.x * speedRef.current.h);
-      panY.set(t.y * limitsRef.current.y * speedRef.current.v);
+      tiltX.set(t.x);
+      tiltY.set(t.y);
     },
-    [panX, panY],
+    [tiltX, tiltY],
   );
-
-  useEffect(() => {
-    if (!isTouchTablet || !motionEnabled) return;
-    const t = tiltRef.current;
-    panX.set(t.x * limits.x * hSpeed);
-    panY.set(t.y * limits.y * vSpeed);
-  }, [hSpeed, vSpeed, limits.x, limits.y, isTouchTablet, motionEnabled, panX, panY]);
 
   const { supported: tiltSupported, requestPermission, calibrate } =
     useDeviceTilt(isTouchTablet && motionEnabled, onTilt);
@@ -91,10 +74,8 @@ export function GalleryExperience() {
 
   useEffect(() => {
     if (!isTouchTablet) {
-      const px = pointer.x * 14;
-      const py = pointer.y * 14;
-      parallaxX.set(px);
-      parallaxY.set(py);
+      parallaxX.set(pointer.x * 14);
+      parallaxY.set(pointer.y * 14);
     }
   }, [isTouchTablet, pointer.x, pointer.y, parallaxX, parallaxY]);
 
@@ -111,10 +92,9 @@ export function GalleryExperience() {
   const [rowTop, rowBottom, rowCenter] = galleryDesktopRows;
   let slotIndex = 0;
 
-  const sceneX = isTouchTablet ? panX : parallaxX;
-  const sceneY = isTouchTablet ? panY : parallaxY;
-  const lightX = isTouchTablet ? 0 : pointer.x;
-  const lightY = isTouchTablet ? 0 : pointer.y;
+  const roomContent = (
+    <GalleryRoomGrid artworks={galleryRoomGrid} onSelect={setSelected} />
+  );
 
   return (
     <div
@@ -141,7 +121,7 @@ export function GalleryExperience() {
         <h1 className="type-display text-balance">Enter the collection</h1>
         <p className="mx-auto mt-3 max-w-md text-sm text-stone-body">
           {isTouchTablet
-            ? "Tilt to move · Adjust speed on rails · Pinch to zoom"
+            ? "Tilt — each work moves on its own · Rails set speed · Pinch to zoom"
             : "Move cursor to explore · Pinch trackpad or Ctrl+scroll to zoom"}
         </p>
       </div>
@@ -160,8 +140,8 @@ export function GalleryExperience() {
           <div className="glass-panel max-w-sm p-8 text-center">
             <p className="type-display-sm">Tilt to explore</p>
             <p className="mt-4 text-sm text-stone-body">
-              Move your device to pan the gallery. Use the side rails to set
-              horizontal and vertical speed. Pinch with two fingers to zoom.
+              Each artwork drifts independently as you tilt. Use the rails to
+              control horizontal and vertical speed. Pinch to zoom.
             </p>
             <button
               type="button"
@@ -190,7 +170,7 @@ export function GalleryExperience() {
         }
         style={
           isTouchTablet
-            ? undefined
+            ? { perspective: "1100px", perspectiveOrigin: "50% 45%" }
             : { perspective: "1400px", perspectiveOrigin: "50% 30%" }
         }
       >
@@ -198,102 +178,86 @@ export function GalleryExperience() {
           ref={viewportRef}
           className={
             isTouchTablet
-              ? "gallery-viewport relative h-full w-full overflow-hidden"
+              ? "gallery-viewport gallery-viewport--float relative flex h-full w-full items-center justify-center overflow-hidden"
               : "site-container relative"
-          }
-          style={
-            isTouchTablet
-              ? { perspective: "1200px", perspectiveOrigin: "50% 50%" }
-              : undefined
           }
         >
           <motion.div
-            className={
-              isTouchTablet
-                ? "absolute left-1/2 top-1/2 w-full will-change-transform"
-                : "relative will-change-transform"
-            }
+            className="relative will-change-transform"
             style={{
-              ...(isTouchTablet
-                ? { x: "-50%", y: "-50%" }
-                : {}),
               scale: sceneZoom,
               transformStyle: "preserve-3d",
+              ...(isTouchTablet
+                ? {}
+                : { x: parallaxX, y: parallaxY }),
             }}
           >
-            <motion.div
-              ref={canvasRef}
-              className={
-                isTouchTablet
-                  ? "gallery-canvas--room relative will-change-transform"
-                  : "relative will-change-transform"
-              }
-              style={{
-                x: sceneX,
-                y: sceneY,
-                transformStyle: "preserve-3d",
-              }}
-            >
-              <div className={isTouchTablet ? "relative" : "relative min-h-[70vh]"}>
-                <GalleryLight parallaxX={lightX} parallaxY={lightY} />
-                <GalleryAtmosphere />
+            <div className={isTouchTablet ? "relative" : "relative min-h-[70vh]"}>
+              <GalleryLight
+                parallaxX={isTouchTablet ? 0 : pointer.x}
+                parallaxY={isTouchTablet ? 0 : pointer.y}
+              />
+              <GalleryAtmosphere />
 
-                {isTouchTablet ? (
-                  <GalleryRoomGrid
-                    artworks={galleryRoomGrid}
-                    onSelect={setSelected}
-                  />
-                ) : (
-                  <div
-                    className="relative flex flex-col gap-16 sm:gap-20 md:gap-28"
-                    style={{ transformStyle: "preserve-3d" }}
-                  >
-                    <div className="grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-8 md:gap-12">
-                      {rowTop.map((art) => {
-                        const i = slotIndex++;
-                        return (
-                          <GalleryArtworkSlot
-                            key={art.id}
-                            art={art}
-                            index={i}
-                            onSelect={() => setSelected(art)}
-                          />
-                        );
-                      })}
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8 md:gap-12">
-                      {rowBottom.map((art) => {
-                        const i = slotIndex++;
-                        return (
-                          <GalleryArtworkSlot
-                            key={art.id}
-                            art={art}
-                            index={i}
-                            onSelect={() => setSelected(art)}
-                          />
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex justify-center pt-4 sm:pt-8">
-                      {rowCenter.map((art) => {
-                        const i = slotIndex++;
-                        return (
-                          <div key={art.id} className="w-full max-w-[380px]">
-                            <GalleryArtworkSlot
-                              art={art}
-                              index={i}
-                              onSelect={() => setSelected(art)}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
+              {isTouchTablet ? (
+                <GalleryTiltProvider
+                  tiltX={tiltX}
+                  tiltY={tiltY}
+                  horizontalSpeed={hSpeed}
+                  verticalSpeed={vSpeed}
+                >
+                  {roomContent}
+                </GalleryTiltProvider>
+              ) : (
+                <div
+                  className="relative flex flex-col gap-16 sm:gap-20 md:gap-28"
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <div className="grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-8 md:gap-12">
+                    {rowTop.map((art) => {
+                      const i = slotIndex++;
+                      return (
+                        <GalleryArtworkSlot
+                          key={art.id}
+                          art={art}
+                          index={i}
+                          onSelect={() => setSelected(art)}
+                        />
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            </motion.div>
+
+                  <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8 md:gap-12">
+                    {rowBottom.map((art) => {
+                      const i = slotIndex++;
+                      return (
+                        <GalleryArtworkSlot
+                          key={art.id}
+                          art={art}
+                          index={i}
+                          onSelect={() => setSelected(art)}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex justify-center pt-4 sm:pt-8">
+                    {rowCenter.map((art) => {
+                      const i = slotIndex++;
+                      return (
+                        <div key={art.id} className="w-full max-w-[380px]">
+                          <GalleryArtworkSlot
+                            art={art}
+                            index={i}
+                            onSelect={() => setSelected(art)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
         </div>
       </div>

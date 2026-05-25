@@ -342,17 +342,24 @@ body {
 }
 
 .gallery-room__cell {
+  position: relative;
   min-width: 0;
   aspect-ratio: 4 / 5;
+  overflow: visible;
 }
 
-.gallery-canvas--room {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 200vw;
-  min-height: 185vh;
-  padding: clamp(1.5rem, 5vw, 2.5rem);
+.gallery-room__frame {
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.45));
+  transition: filter 0.4s ease;
+}
+
+.gallery-viewport--float {
+  perspective: 1100px;
+  perspective-origin: 50% 45%;
+}
+
+.gallery-room {
+  transform-style: preserve-3d;
 }
 
 /* Motion speed rails — phones through tablets */
