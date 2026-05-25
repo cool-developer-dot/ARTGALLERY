@@ -19,6 +19,7 @@ interface GalleryArtworkCardProps {
   alt: string;
   onSelect: () => void;
   disableTilt?: boolean;
+  compact?: boolean;
 }
 
 export function GalleryArtworkCard({
@@ -26,6 +27,7 @@ export function GalleryArtworkCard({
   alt,
   onSelect,
   disableTilt = false,
+  compact = false,
 }: GalleryArtworkCardProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const { premium, premiumTilt: canTilt } = useArtworkCapabilities();
@@ -102,7 +104,11 @@ export function GalleryArtworkCard({
             fill
             loading="lazy"
             className="object-cover"
-            sizes="(max-width: 640px) 88vw, (max-width: 1024px) 30vw, 280px"
+            sizes={
+              compact
+                ? "(max-width: 640px) 28vw, (max-width: 1024px) 22vw, 140px"
+                : "(max-width: 640px) 88vw, (max-width: 1024px) 30vw, 280px"
+            }
             quality={72}
             draggable={false}
           />

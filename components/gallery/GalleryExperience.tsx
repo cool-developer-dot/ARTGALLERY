@@ -15,8 +15,10 @@ import { usePinchZoom } from "@/hooks/usePinchZoom";
 import { useWheelZoom } from "@/hooks/useWheelZoom";
 import { usePointerDepth } from "@/hooks/usePointerDepth";
 import { useTouchTablet } from "@/hooks/useTouchTablet";
+import { GalleryRoomGrid } from "@/components/gallery/GalleryRoomGrid";
 import {
-  galleryRows,
+  galleryDesktopRows,
+  galleryRoomGrid,
   type GalleryArtwork,
 } from "@/lib/galleryArtworks";
 import { artworkSpring, galleryPanSpring, galleryZoomSpring } from "@/lib/motion";
@@ -106,7 +108,7 @@ export function GalleryExperience() {
     setMotionEnabled(true);
   }, [tiltSupported, requestPermission, calibrate]);
 
-  const [rowTop, rowBottom, rowCenter] = galleryRows;
+  const [rowTop, rowBottom, rowCenter] = galleryDesktopRows;
   let slotIndex = 0;
 
   const sceneX = isTouchTablet ? panX : parallaxX;
@@ -183,7 +185,7 @@ export function GalleryExperience() {
         ref={sceneRef}
         className={
           isTouchTablet
-            ? "gallery-scene absolute inset-0 pt-[calc(7rem+env(safe-area-inset-top))] pb-[calc(4.5rem+env(safe-area-inset-bottom))] pl-11 sm:pl-12"
+            ? "gallery-scene gallery-scene--room absolute inset-0 pt-[calc(7rem+env(safe-area-inset-top))]"
             : "gallery-scene gallery-scene--desktop-zoom relative pt-36 pb-24 sm:pt-40 sm:pb-28"
         }
         style={
@@ -223,7 +225,7 @@ export function GalleryExperience() {
               ref={canvasRef}
               className={
                 isTouchTablet
-                  ? "relative inline-block min-w-[125vw] px-[12vw] py-14 will-change-transform sm:min-w-[118vw] sm:py-20"
+                  ? "gallery-canvas--room relative will-change-transform"
                   : "relative will-change-transform"
               }
               style={{
@@ -236,56 +238,60 @@ export function GalleryExperience() {
                 <GalleryLight parallaxX={lightX} parallaxY={lightY} />
                 <GalleryAtmosphere />
 
-                <div
-                  className="relative flex flex-col gap-16 sm:gap-20 md:gap-28"
-                  style={{ transformStyle: "preserve-3d" }}
-                >
-                  <div className="grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-8 md:gap-12">
-                    {rowTop.map((art) => {
-                      const i = slotIndex++;
-                      return (
-                        <GalleryArtworkSlot
-                          key={art.id}
-                          art={art}
-                          index={i}
-                          onSelect={() => setSelected(art)}
-                          disableCardTilt={isTouchTablet}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8 md:gap-12">
-                    {rowBottom.map((art) => {
-                      const i = slotIndex++;
-                      return (
-                        <GalleryArtworkSlot
-                          key={art.id}
-                          art={art}
-                          index={i}
-                          onSelect={() => setSelected(art)}
-                          disableCardTilt={isTouchTablet}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex justify-center pt-4 sm:pt-8">
-                    {rowCenter.map((art) => {
-                      const i = slotIndex++;
-                      return (
-                        <div key={art.id} className="w-full max-w-[380px]">
+                {isTouchTablet ? (
+                  <GalleryRoomGrid
+                    artworks={galleryRoomGrid}
+                    onSelect={setSelected}
+                  />
+                ) : (
+                  <div
+                    className="relative flex flex-col gap-16 sm:gap-20 md:gap-28"
+                    style={{ transformStyle: "preserve-3d" }}
+                  >
+                    <div className="grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-8 md:gap-12">
+                      {rowTop.map((art) => {
+                        const i = slotIndex++;
+                        return (
                           <GalleryArtworkSlot
+                            key={art.id}
                             art={art}
                             index={i}
                             onSelect={() => setSelected(art)}
-                            disableCardTilt={isTouchTablet}
                           />
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8 md:gap-12">
+                      {rowBottom.map((art) => {
+                        const i = slotIndex++;
+                        return (
+                          <GalleryArtworkSlot
+                            key={art.id}
+                            art={art}
+                            index={i}
+                            onSelect={() => setSelected(art)}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex justify-center pt-4 sm:pt-8">
+                      {rowCenter.map((art) => {
+                        const i = slotIndex++;
+                        return (
+                          <div key={art.id} className="w-full max-w-[380px]">
+                            <GalleryArtworkSlot
+                              art={art}
+                              index={i}
+                              onSelect={() => setSelected(art)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
@@ -296,16 +302,16 @@ export function GalleryExperience() {
         className="pointer-events-none fixed z-40 flex justify-center"
         style={{
           bottom: isTouchTablet
-            ? "calc(4.25rem + env(safe-area-inset-bottom))"
+            ? "calc(var(--gallery-h-rail) + 0.35rem + env(safe-area-inset-bottom))"
             : "1.5rem",
-          left: 0,
+          left: isTouchTablet ? "var(--gallery-v-rail)" : 0,
           right: 0,
         }}
       >
         <p className="type-caption glass-panel px-4 py-2">
           {isTouchTablet
-            ? `${Math.round(zoom * 100)}% · H ${hSpeed.toFixed(1)}× · V ${vSpeed.toFixed(1)}×`
-            : `${Math.round(zoom * 100)}% zoom · 7 works`}
+            ? `${Math.round(zoom * 100)}% · 9 works · H ${hSpeed.toFixed(1)}× · V ${vSpeed.toFixed(1)}×`
+            : `${Math.round(zoom * 100)}% zoom · 9 works`}
         </p>
       </div>
 

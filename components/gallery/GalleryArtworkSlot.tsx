@@ -9,6 +9,7 @@ interface GalleryArtworkSlotProps {
   index: number;
   onSelect: () => void;
   disableCardTilt?: boolean;
+  compact?: boolean;
 }
 
 export function GalleryArtworkSlot({
@@ -16,12 +17,17 @@ export function GalleryArtworkSlot({
   index,
   onSelect,
   disableCardTilt,
+  compact = false,
 }: GalleryArtworkSlotProps) {
-  const translateZ = art.layout.z * 48;
+  const translateZ = art.layout.z * (compact ? 32 : 48);
 
   return (
     <motion.div
-      className="w-full max-w-[340px] mx-auto will-change-transform"
+      className={
+        compact
+          ? "w-full will-change-transform"
+          : "w-full max-w-[340px] mx-auto will-change-transform"
+      }
       style={{
         transform: `translateZ(${translateZ}px) rotate(${art.layout.rotate ?? 0}deg)`,
         transformStyle: "preserve-3d",
@@ -35,6 +41,7 @@ export function GalleryArtworkSlot({
         alt={art.title}
         onSelect={onSelect}
         disableTilt={disableCardTilt}
+        compact={compact}
       />
     </motion.div>
   );

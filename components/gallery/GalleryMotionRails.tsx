@@ -25,20 +25,18 @@ export function GalleryMotionRails({
 }: GalleryMotionRailsProps) {
   return (
     <>
-      {/* Vertical sidebar — up / down movement speed */}
+      {/* Vertical rail — up / down speed */}
       <aside
-        className="gallery-motion-rail gallery-motion-rail--vertical fixed left-0 z-[45] flex w-11 flex-col items-center border-r border-white/[0.06] bg-bg-deep/75 backdrop-blur-xl sm:w-12 lg:hidden"
-        style={{
-          top: "calc(4.25rem + env(safe-area-inset-top))",
-          bottom: "calc(4.75rem + env(safe-area-inset-bottom))",
-        }}
+        className="gallery-motion-rail gallery-motion-rail--vertical fixed left-0 z-[45] flex flex-col items-center border-r border-white/[0.08] bg-bg-deep/82 backdrop-blur-xl lg:hidden"
         aria-label="Vertical pan speed"
       >
-        <span className="type-caption mt-3 shrink-0 text-[0.55rem] uppercase tracking-[0.2em] text-stone-muted [writing-mode:vertical-rl] rotate-180">
-          Up · Down
-        </span>
+        <div className="flex w-full shrink-0 items-center justify-center border-b border-white/[0.06] py-2.5">
+          <span className="type-caption text-[0.5rem] uppercase tracking-[0.22em] text-stone-muted [writing-mode:vertical-rl] rotate-180">
+            Up · Down
+          </span>
+        </div>
 
-        <div className="relative my-3 flex min-h-0 flex-1 items-center justify-center px-1">
+        <div className="relative flex min-h-0 flex-1 items-center justify-center px-1.5 py-4">
           <input
             type="range"
             className="gallery-speed-slider gallery-speed-slider--vertical"
@@ -52,25 +50,23 @@ export function GalleryMotionRails({
           />
         </div>
 
-        <span className="type-caption mb-3 shrink-0 font-mono text-[0.65rem] tabular-nums text-ivory/90">
-          {formatSpeed(vertical)}
-        </span>
+        <div className="flex w-full shrink-0 items-center justify-center border-t border-white/[0.06] py-2.5">
+          <span className="font-mono text-[0.65rem] tabular-nums text-ivory/90">
+            {formatSpeed(vertical)}
+          </span>
+        </div>
       </aside>
 
-      {/* Horizontal sidebar — left / right movement speed */}
+      {/* Horizontal rail — left / right speed */}
       <aside
-        className="gallery-motion-rail gallery-motion-rail--horizontal fixed right-0 bottom-0 left-0 z-[45] flex h-14 items-center gap-3 border-t border-white/[0.06] bg-bg-deep/75 px-3 backdrop-blur-xl sm:h-[3.75rem] sm:gap-4 sm:pl-14 lg:hidden"
-        style={{
-          paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
-          paddingLeft: "max(0.75rem, calc(2.75rem + env(safe-area-inset-left)))",
-        }}
+        className="gallery-motion-rail gallery-motion-rail--horizontal fixed right-0 bottom-0 z-[45] flex items-center gap-3 border-t border-white/[0.08] bg-bg-deep/82 px-3 backdrop-blur-xl sm:gap-4 sm:px-4 lg:hidden"
         aria-label="Horizontal pan speed"
       >
-        <div className="hidden min-w-[3.5rem] shrink-0 sm:block">
-          <span className="type-caption block text-[0.55rem] uppercase tracking-[0.18em] text-stone-muted">
+        <div className="hidden shrink-0 sm:block">
+          <span className="type-caption block text-[0.5rem] uppercase tracking-[0.18em] text-stone-muted">
             Left · Right
           </span>
-          <span className="font-mono text-[0.7rem] tabular-nums text-ivory/90">
+          <span className="font-mono text-[0.68rem] tabular-nums text-ivory/90">
             {formatSpeed(horizontal)}
           </span>
         </div>
