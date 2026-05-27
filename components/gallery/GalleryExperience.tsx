@@ -2,11 +2,12 @@
 
 import { motion, useSpring } from "framer-motion";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArtworkDetail } from "@/components/gallery/ArtworkDetail";
 import { GalleryArtworkSlot } from "@/components/gallery/GalleryArtworkSlot";
 import { GalleryAtmosphere } from "@/components/gallery/GalleryAtmosphere";
 import { GalleryLight } from "@/components/gallery/GalleryLight";
+import { GalleryMainRoomLobby } from "@/components/gallery/GalleryMainRoomLobby";
 import { GalleryMotionRails } from "@/components/gallery/GalleryMotionRails";
 import { GallerySpatialViewer } from "@/components/gallery/GallerySpatialViewer";
 import { useDeviceTilt } from "@/hooks/useDeviceTilt";
@@ -20,7 +21,12 @@ import {
   galleryMainRoomCollections,
   type GalleryArtwork,
 } from "@/lib/galleryArtworks";
+import { buildRoomSpatialGrid } from "@/lib/gallerySpatial";
 import { artworkSpring, galleryZoomSpring } from "@/lib/motion";
+
+type MobilePhase = "lobby" | "room";
+
+const EMPTY_GRID: (GalleryArtwork | null)[][] = [[null]];
 
 export function GalleryExperience() {
   const isTouchTablet = useTouchTablet();
@@ -29,6 +35,22 @@ export function GalleryExperience() {
   const [motionEnabled, setMotionEnabled] = useState(false);
   const [needsTiltPermission, setNeedsTiltPermission] = useState(false);
   const [selected, setSelected] = useState<GalleryArtwork | null>(null);
+  const [mobilePhase, setMobilePhase] = useState<MobilePhase>("lobby");
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+
+  const activeRoom = useMemo(
+    () => galleryMainRoomCollections.find((r) => r.id === activeRoomId) ?? null,
+    [activeRoomId],
+  );
+
+  const roomSpatial = useMemo(
+    () => (activeRoom ? buildRoomSpatialGrid(activeRoom.artworks) : null),
+    [activeRoom],
+  );
+
+  const spatialGrid = roomSpatial?.grid ?? EMPTY_GRID;
+  const spatialStart = roomSpatial?.start ?? { row: 0, col: 0 };
+  const inRoom = isTouchTablet && mobilePhase === "room" && !!roomSpatial;
 
   const {
     horizontal: hSpeed,
@@ -44,15 +66,22 @@ export function GalleryExperience() {
     artwork: spatialArtwork,
     position: spatialPosition,
     direction: spatialDirection,
-    index: spatialIndex,
+    workIndex: spatialWorkIndex,
+    totalWorks: spatialTotalWorks,
+    canGoLeft,
+    canGoRight,
+    canGoUp,
+    canGoDown,
     tiltPreview,
     handleTilt,
     go: goSpatial,
     reset: resetSpatial,
   } = useSpatialGalleryNav(
+    spatialGrid,
+    spatialStart,
     hSpeed,
     vSpeed,
-    isTouchTablet && motionEnabled,
+    inRoom && motionEnabled,
     () => snapBaselineRef.current(),
   );
 
@@ -64,7 +93,7 @@ export function GalleryExperience() {
   }, []);
 
   const { supported: tiltSupported, requestPermission, calibrate, snapBaseline } =
-    useDeviceTilt(isTouchTablet && motionEnabled, onTilt);
+    useDeviceTilt(inRoom && motionEnabled, onTilt);
 
   snapBaselineRef.current = snapBaseline;
 
@@ -111,6 +140,21 @@ export function GalleryExperience() {
     setMotionEnabled(true);
   }, [tiltSupported, requestPermission, calibrate, resetSpatial]);
 
+  const enterRoom = useCallback(
+    (roomId: string) => {
+      setActiveRoomId(roomId);
+      setMobilePhase("room");
+      resetSpatial();
+    },
+    [resetSpatial],
+  );
+
+  const exitRoom = useCallback(() => {
+    setMobilePhase("lobby");
+    setActiveRoomId(null);
+    resetSpatial();
+  }, [resetSpatial]);
+
   const desktopArtworkCount = galleryMainRoomCollections.reduce(
     (total, room) => total + room.artworks.length,
     0,
@@ -126,13 +170,29 @@ export function GalleryExperience() {
     >
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-bg-deep/80 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
         <div className="site-container flex items-center justify-between gap-3 py-4 sm:py-5">
-          <Link
-            href="/"
-            className="shrink-0 text-sm text-stone-body transition-colors hover:text-ivory"
-          >
-            ← Atelier
-          </Link>
-          <p className="type-label hidden truncate sm:block">Spatial collection</p>
+          {isTouchTablet && mobilePhase === "room" ? (
+            <button
+              type="button"
+              onClick={exitRoom}
+              className="shrink-0 text-sm text-stone-body transition-colors hover:text-ivory"
+            >
+              ← Main hall
+            </button>
+          ) : (
+            <Link
+              href="/"
+              className="shrink-0 text-sm text-stone-body transition-colors hover:text-ivory"
+            >
+              ← Atelier
+            </Link>
+          )}
+          <p className="type-label truncate text-center">
+            {isTouchTablet
+              ? mobilePhase === "lobby"
+                ? "Main room"
+                : activeRoom?.title ?? "Gallery"
+              : "Spatial collection"}
+          </p>
           <span className="w-12 shrink-0" aria-hidden />
         </div>
       </header>
@@ -141,12 +201,14 @@ export function GalleryExperience() {
         <h1 className="type-display text-balance">Enter the collection</h1>
         <p className="mx-auto mt-3 max-w-md text-sm text-stone-body">
           {isTouchTablet
-            ? "Swipe or tilt to browse · Pinch to zoom"
+            ? mobilePhase === "lobby"
+              ? "You are in the main hall · Tap a room to enter"
+              : "Swipe or tilt to browse works · Pinch to zoom"
             : "Move cursor to explore · Pinch trackpad or Ctrl+scroll to zoom"}
         </p>
       </div>
 
-      {isTouchTablet && speedReady && (
+      {inRoom && speedReady && (
         <GalleryMotionRails
           horizontal={hSpeed}
           vertical={vSpeed}
@@ -155,13 +217,14 @@ export function GalleryExperience() {
         />
       )}
 
-      {isTouchTablet && needsTiltPermission && tiltSupported && !motionEnabled && (
+      {inRoom && needsTiltPermission && tiltSupported && !motionEnabled && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-bg-deep/90 p-6">
           <div className="glass-panel max-w-sm p-8 text-center">
             <p className="type-display-sm">Browse the collection</p>
             <p className="mt-4 text-sm text-stone-body">
-              One artwork fills the screen. Tilt left, right, up, or down to
-              move through the gallery. Adjust speed on the side rails. Pinch to
+              Start in the main hall and tap a room to enter. Inside each room,
+              one artwork fills the screen—tilt or swipe left, right, up, or down
+              to move between works. Adjust speed on the side rails. Pinch to
               zoom.
             </p>
             <button
@@ -198,7 +261,9 @@ export function GalleryExperience() {
         <div
           className={
             isTouchTablet
-              ? "gallery-viewport gallery-viewport--spatial relative flex h-full w-full items-center justify-center overflow-hidden"
+              ? mobilePhase === "lobby"
+                ? "gallery-viewport gallery-viewport--lobby relative h-full w-full overflow-y-auto overflow-x-hidden"
+                : "gallery-viewport gallery-viewport--spatial relative flex h-full w-full items-center justify-center overflow-hidden"
               : "site-container relative"
           }
         >
@@ -218,19 +283,30 @@ export function GalleryExperience() {
               <GalleryAtmosphere />
 
               {isTouchTablet ? (
-                <GallerySpatialViewer
-                  artwork={spatialArtwork}
-                  direction={spatialDirection}
-                  row={spatialPosition.row}
-                  col={spatialPosition.col}
-                  tilt={tiltPreview}
-                  canGoLeft={spatialPosition.col > 0}
-                  canGoRight={spatialPosition.col < 2}
-                  canGoUp={spatialPosition.row > 0}
-                  canGoDown={spatialPosition.row < 2}
-                  onOpen={() => setSelected(spatialArtwork)}
-                  onNavigate={onNavigate}
-                />
+                mobilePhase === "lobby" ? (
+                  <GalleryMainRoomLobby
+                    rooms={galleryMainRoomCollections}
+                    onEnterRoom={enterRoom}
+                  />
+                ) : roomSpatial ? (
+                  <GallerySpatialViewer
+                    artwork={spatialArtwork}
+                    grid={roomSpatial.grid}
+                    direction={spatialDirection}
+                    row={spatialPosition.row}
+                    col={spatialPosition.col}
+                    workIndex={spatialWorkIndex}
+                    totalWorks={spatialTotalWorks}
+                    roomTitle={activeRoom?.title ?? "Room"}
+                    tilt={tiltPreview}
+                    canGoLeft={canGoLeft}
+                    canGoRight={canGoRight}
+                    canGoUp={canGoUp}
+                    canGoDown={canGoDown}
+                    onOpen={() => setSelected(spatialArtwork)}
+                    onNavigate={onNavigate}
+                  />
+                ) : null
               ) : (
                 <div
                   className="relative flex flex-col gap-10 sm:gap-12 md:gap-14"
@@ -291,7 +367,9 @@ export function GalleryExperience() {
       >
         <p className="type-caption glass-panel px-4 py-2">
           {isTouchTablet
-            ? `${Math.round(zoom * 100)}% · ${spatialIndex}/9 · H ${hSpeed.toFixed(1)}× · V ${vSpeed.toFixed(1)}×`
+            ? mobilePhase === "lobby"
+              ? `${Math.round(zoom * 100)}% · Main hall · ${galleryMainRoomCollections.length} rooms`
+              : `${Math.round(zoom * 100)}% · ${activeRoom?.title ?? "Room"} · ${spatialWorkIndex}/${spatialTotalWorks} · H ${hSpeed.toFixed(1)}× · V ${vSpeed.toFixed(1)}×`
             : `${Math.round(zoom * 100)}% zoom · ${desktopArtworkCount} works`}
         </p>
       </div>

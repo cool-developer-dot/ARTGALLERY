@@ -5,16 +5,20 @@ import Image from "next/image";
 import { useRef } from "react";
 import { GallerySpatialMap } from "@/components/gallery/GallerySpatialMap";
 import type { GalleryArtwork, SpatialDirection } from "@/lib/galleryArtworks";
-import { getSpatialIndex } from "@/lib/galleryArtworks";
+import type { SpatialGrid } from "@/lib/gallerySpatial";
 import type { Tilt } from "@/hooks/useDeviceTilt";
 import { useSpatialSwipe } from "@/hooks/useSpatialSwipe";
 import { artworkZoomEase, galleryPanSpring } from "@/lib/motion";
 
 interface GallerySpatialViewerProps {
   artwork: GalleryArtwork;
+  grid: SpatialGrid;
   direction: SpatialDirection | null;
   row: number;
   col: number;
+  workIndex: number;
+  totalWorks: number;
+  roomTitle: string;
   tilt: Tilt;
   canGoLeft: boolean;
   canGoRight: boolean;
@@ -88,9 +92,13 @@ function NavButton({
 
 export function GallerySpatialViewer({
   artwork,
+  grid,
   direction,
   row,
   col,
+  workIndex,
+  totalWorks,
+  roomTitle,
   tilt,
   canGoLeft,
   canGoRight,
@@ -100,7 +108,6 @@ export function GallerySpatialViewer({
   onNavigate,
 }: GallerySpatialViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const index = getSpatialIndex(row, col);
 
   useSpatialSwipe(true, containerRef, onNavigate);
 
@@ -111,11 +118,15 @@ export function GallerySpatialViewer({
 
   return (
     <div ref={containerRef} className="gallery-spatial-viewer">
-      <GallerySpatialMap activeRow={row} activeCol={col} />
+      <GallerySpatialMap grid={grid} activeRow={row} activeCol={col} />
 
       <p className="gallery-spatial-viewer__index type-caption">
-        <span className="font-mono tabular-nums text-ivory">{index}</span>
-        <span className="text-stone-muted"> / 9</span>
+        <span className="text-stone-muted">{roomTitle}</span>
+        <span className="mx-2 text-stone-muted/50" aria-hidden>
+          ·
+        </span>
+        <span className="font-mono tabular-nums text-ivory">{workIndex}</span>
+        <span className="text-stone-muted"> / {totalWorks}</span>
       </p>
 
       <div className="gallery-spatial-viewer__stage">
@@ -197,7 +208,7 @@ export function GallerySpatialViewer({
             {artwork.medium}
           </p>
           <p className="gallery-spatial-viewer__hint mt-3 text-stone-body">
-            Swipe or tilt · Tap for details
+            Swipe or tilt left, right, up, down · Tap for details
           </p>
         </motion.div>
       </AnimatePresence>

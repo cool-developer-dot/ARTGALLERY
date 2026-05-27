@@ -2,13 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Tilt } from "@/hooks/useDeviceTilt";
+import type { SpatialDirection } from "@/lib/galleryArtworks";
 import {
-  spatialGalleryGrid,
-  type SpatialDirection,
-} from "@/lib/galleryArtworks";
-
-type NavState = { row: 0 | 1 | 2; col: 0 | 1 | 2 };
-const START: NavState = { row: 1, col: 1 };
+  canSpatialMove,
+  countSpatialWorks,
+  findSpatialNeighbor,
+  getSpatialWorkIndex,
+  type SpatialGrid,
+  type SpatialPosition,
+} from "@/lib/gallerySpatial";
 
 const ACCUM_TRIGGER = 0.16;
 const COOLDOWN_MIN_MS = 180;
@@ -19,12 +21,14 @@ function cooldownMs(hSpeed: number, vSpeed: number) {
 }
 
 export function useSpatialGalleryNav(
+  grid: SpatialGrid,
+  start: SpatialPosition,
   horizontalSpeed: number,
   verticalSpeed: number,
   enabled: boolean,
   snapBaseline?: () => void,
 ) {
-  const [position, setPosition] = useState<NavState>(START);
+  const [position, setPosition] = useState<SpatialPosition>(start);
   const [direction, setDirection] = useState<SpatialDirection | null>(null);
   const [tiltPreview, setTiltPreview] = useState<Tilt>({ x: 0, y: 0 });
   const positionRef = useRef(position);
@@ -40,7 +44,18 @@ export function useSpatialGalleryNav(
     snapRef.current = snapBaseline;
   }, [snapBaseline]);
 
-  const artwork = spatialGalleryGrid[position.row][position.col];
+  useEffect(() => {
+    setPosition(start);
+    setDirection(null);
+    setTiltPreview({ x: 0, y: 0 });
+    positionRef.current = start;
+    lastNav.current = 0;
+    accum.current = { x: 0, y: 0 };
+  }, [grid, start.row, start.col]);
+
+  const artwork = grid[position.row]?.[position.col] ?? grid[0]?.[0]!;
+  const totalWorks = countSpatialWorks(grid);
+  const workIndex = getSpatialWorkIndex(grid, position.row, position.col);
 
   const go = useCallback(
     (dir: SpatialDirection) => {
@@ -50,23 +65,7 @@ export function useSpatialGalleryNav(
       }
 
       const pos = positionRef.current;
-      let next: NavState | null = null;
-
-      switch (dir) {
-        case "right":
-          if (pos.col < 2) next = { row: pos.row, col: (pos.col + 1) as 0 | 1 | 2 };
-          break;
-        case "left":
-          if (pos.col > 0) next = { row: pos.row, col: (pos.col - 1) as 0 | 1 | 2 };
-          break;
-        case "down":
-          if (pos.row < 2) next = { row: (pos.row + 1) as 0 | 1 | 2, col: pos.col };
-          break;
-        case "up":
-          if (pos.row > 0) next = { row: (pos.row - 1) as 0 | 1 | 2, col: pos.col };
-          break;
-      }
-
+      const next = findSpatialNeighbor(grid, pos.row, pos.col, dir);
       if (!next) return false;
 
       lastNav.current = now;
@@ -77,7 +76,7 @@ export function useSpatialGalleryNav(
       window.setTimeout(() => setDirection(null), 320);
       return true;
     },
-    [horizontalSpeed, verticalSpeed],
+    [grid, horizontalSpeed, verticalSpeed],
   );
 
   const handleTilt = useCallback(
@@ -98,38 +97,43 @@ export function useSpatialGalleryNav(
       const pos = positionRef.current;
 
       if (Math.abs(ax) >= Math.abs(ay)) {
-        if (ax >= ACCUM_TRIGGER && pos.col < 2) {
+        if (ax >= ACCUM_TRIGGER && canSpatialMove(grid, pos.row, pos.col, "right")) {
           go("right");
-        } else if (ax <= -ACCUM_TRIGGER && pos.col > 0) {
+        } else if (ax <= -ACCUM_TRIGGER && canSpatialMove(grid, pos.row, pos.col, "left")) {
           go("left");
         }
-      } else if (ay >= ACCUM_TRIGGER && pos.row < 2) {
+      } else if (ay >= ACCUM_TRIGGER && canSpatialMove(grid, pos.row, pos.col, "down")) {
         go("down");
-      } else if (ay <= -ACCUM_TRIGGER && pos.row > 0) {
+      } else if (ay <= -ACCUM_TRIGGER && canSpatialMove(grid, pos.row, pos.col, "up")) {
         go("up");
       }
 
       accum.current.x *= 0.88;
       accum.current.y *= 0.88;
     },
-    [enabled, horizontalSpeed, verticalSpeed, go],
+    [enabled, grid, horizontalSpeed, verticalSpeed, go],
   );
 
   const reset = useCallback(() => {
-    setPosition(START);
+    setPosition(start);
     setDirection(null);
     setTiltPreview({ x: 0, y: 0 });
-    positionRef.current = START;
+    positionRef.current = start;
     lastNav.current = 0;
     accum.current = { x: 0, y: 0 };
-  }, []);
+  }, [start.row, start.col]);
 
   return {
     artwork,
     position,
     direction,
     tiltPreview,
-    index: position.row * 3 + position.col + 1,
+    workIndex,
+    totalWorks,
+    canGoLeft: canSpatialMove(grid, position.row, position.col, "left"),
+    canGoRight: canSpatialMove(grid, position.row, position.col, "right"),
+    canGoUp: canSpatialMove(grid, position.row, position.col, "up"),
+    canGoDown: canSpatialMove(grid, position.row, position.col, "down"),
     handleTilt,
     go,
     reset,
