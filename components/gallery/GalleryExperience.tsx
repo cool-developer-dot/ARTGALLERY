@@ -50,6 +50,7 @@ export function GalleryExperience() {
 
   const spatialGrid = roomSpatial?.grid ?? EMPTY_GRID;
   const spatialStart = roomSpatial?.start ?? { row: 0, col: 0 };
+  const inLobby = isTouchTablet && mobilePhase === "lobby";
   const inRoom = isTouchTablet && mobilePhase === "room" && !!roomSpatial;
 
   const {
@@ -109,9 +110,9 @@ export function GalleryExperience() {
   const parallaxY = useSpring(0, artworkSpring);
   const pointer = usePointerDepth(!isTouchTablet);
 
-  const { zoom: pinchZoom } = usePinchZoom(isTouchTablet, sceneRef);
+  const { zoom: pinchZoom } = usePinchZoom(inRoom, sceneRef);
   const { zoom: wheelZoom } = useWheelZoom(!isTouchTablet, sceneRef);
-  const zoom = isTouchTablet ? pinchZoom : wheelZoom;
+  const zoom = inRoom ? pinchZoom : isTouchTablet ? 1 : wheelZoom;
 
   useEffect(() => {
     const DOE = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
@@ -164,7 +165,9 @@ export function GalleryExperience() {
     <div
       className={
         isTouchTablet
-          ? "gallery-page relative h-[100svh] w-full overflow-hidden bg-bg-deep"
+          ? inLobby
+            ? "gallery-page gallery-page--lobby relative min-h-[100dvh] w-full bg-bg-deep"
+            : "gallery-page relative h-[100dvh] w-full overflow-hidden bg-bg-deep"
           : "relative min-h-[100svh] w-full overflow-x-hidden overflow-y-auto bg-bg-deep"
       }
     >
@@ -197,16 +200,16 @@ export function GalleryExperience() {
         </div>
       </header>
 
-      <div className="pointer-events-none fixed top-[calc(4.5rem+env(safe-area-inset-top))] left-0 right-0 z-40 px-4 text-center sm:top-24 lg:pl-0">
-        <h1 className="type-display text-balance">Enter the collection</h1>
-        <p className="mx-auto mt-3 max-w-md text-sm text-stone-body">
-          {isTouchTablet
-            ? mobilePhase === "lobby"
-              ? "You are in the main hall · Tap a room to enter"
-              : "Swipe or tilt to browse works · Pinch to zoom"
-            : "Move cursor to explore · Pinch trackpad or Ctrl+scroll to zoom"}
-        </p>
-      </div>
+      {!inLobby && (
+        <div className="pointer-events-none fixed top-[calc(4.5rem+env(safe-area-inset-top))] left-0 right-0 z-40 px-4 text-center sm:top-24 lg:pl-0">
+          <h1 className="type-display text-balance">Enter the collection</h1>
+          <p className="mx-auto mt-3 max-w-md text-sm text-stone-body">
+            {isTouchTablet
+              ? "Swipe or tilt to browse works · Pinch to zoom"
+              : "Move cursor to explore · Pinch trackpad or Ctrl+scroll to zoom"}
+          </p>
+        </div>
+      )}
 
       {inRoom && speedReady && (
         <GalleryMotionRails
@@ -249,7 +252,9 @@ export function GalleryExperience() {
         ref={sceneRef}
         className={
           isTouchTablet
-            ? "gallery-scene gallery-scene--room absolute inset-0 pt-[calc(7rem+env(safe-area-inset-top))]"
+            ? inLobby
+              ? "gallery-scene gallery-scene--lobby relative w-full pt-[calc(4.25rem+env(safe-area-inset-top))]"
+              : "gallery-scene gallery-scene--room absolute inset-0 pt-[calc(7rem+env(safe-area-inset-top))]"
             : "gallery-scene gallery-scene--desktop-zoom relative pt-36 pb-24 sm:pt-40 sm:pb-28"
         }
         style={
@@ -261,8 +266,8 @@ export function GalleryExperience() {
         <div
           className={
             isTouchTablet
-              ? mobilePhase === "lobby"
-                ? "gallery-viewport gallery-viewport--lobby relative h-full w-full overflow-y-auto overflow-x-hidden"
+              ? inLobby
+                ? "gallery-viewport gallery-viewport--lobby relative w-full"
                 : "gallery-viewport gallery-viewport--spatial relative flex h-full w-full items-center justify-center overflow-hidden"
               : "site-container relative"
           }
@@ -270,9 +275,9 @@ export function GalleryExperience() {
           <motion.div
             className="relative w-full will-change-transform"
             style={{
-              scale: sceneZoom,
+              scale: inLobby ? 1 : sceneZoom,
               transformStyle: "preserve-3d",
-              ...(isTouchTablet ? {} : { x: parallaxX, y: parallaxY }),
+              ...(isTouchTablet || inLobby ? {} : { x: parallaxX, y: parallaxY }),
             }}
           >
             <div className={isTouchTablet ? "relative w-full" : "relative min-h-[70vh]"}>
@@ -359,9 +364,11 @@ export function GalleryExperience() {
         className="pointer-events-none fixed z-40 flex justify-center"
         style={{
           bottom: isTouchTablet
-            ? "calc(var(--gallery-h-rail) + 0.35rem + env(safe-area-inset-bottom))"
+            ? inLobby
+              ? "calc(0.75rem + env(safe-area-inset-bottom))"
+              : "calc(var(--gallery-h-rail) + 0.35rem + env(safe-area-inset-bottom))"
             : "1.5rem",
-          left: isTouchTablet ? "var(--gallery-v-rail)" : 0,
+          left: isTouchTablet && !inLobby ? "var(--gallery-v-rail)" : 0,
           right: 0,
         }}
       >

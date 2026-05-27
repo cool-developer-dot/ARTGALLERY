@@ -17,9 +17,13 @@ export function GalleryMainRoomLobby({
     <div className="gallery-lobby">
       <div className="gallery-lobby__intro glass-panel border border-white/10 px-5 py-5 sm:px-6">
         <p className="type-caption">Main Room</p>
-        <h2 className="mt-2 type-display-sm">Choose a hall</h2>
+        <h1 className="gallery-lobby__hero-title mt-2 font-display text-ivory">
+          Enter the collection
+        </h1>
+        <h2 className="mt-3 type-display-sm">Choose a hall</h2>
         <p className="mt-2 text-sm text-stone-body">
-          Tap a room to enter. Inside, swipe or tilt to move between works.
+          Scroll to see all halls, then tap a room to enter. Inside, swipe or tilt
+          to move between works.
         </p>
       </div>
 
