@@ -18,6 +18,13 @@ export type GalleryArtwork = {
   layout: ArtworkLayout;
 };
 
+export type GalleryRoomCollection = {
+  id: string;
+  title: string;
+  description: string;
+  artworks: GalleryArtwork[];
+};
+
 export type SpatialDirection = "left" | "right" | "up" | "down";
 
 export const featuredArtworks: GalleryArtwork[] = [
@@ -147,3 +154,265 @@ export const galleryDesktopRows = [
   galleryRoomGrid.filter((a) => a.layout.row === 1),
   galleryRoomGrid.filter((a) => a.layout.row === 2 && a.layout.col === 1),
 ] as const;
+
+function roomArtwork(
+  id: string,
+  title: string,
+  artist: string,
+  year: string,
+  medium: string,
+  description: string,
+  image: string,
+  index: number,
+): GalleryArtwork {
+  const row = Math.floor(index / 3) as 0 | 1 | 2;
+  const col = (index % 3) as 0 | 1 | 2;
+  const zPattern = [0.58, 0.65, 0.52, 0.6, 0.55, 0.62];
+  const rotatePattern = [-2, 0, 2, -1.5, 1.5, 0.5];
+  return {
+    id,
+    title,
+    artist,
+    year,
+    medium,
+    description,
+    image,
+    layout: {
+      row,
+      col,
+      z: zPattern[index % zPattern.length],
+      rotate: rotatePattern[index % rotatePattern.length],
+    },
+  };
+}
+
+export const galleryMainRoomCollections: GalleryRoomCollection[] = [
+  {
+    id: "flowers",
+    title: "Flower Room",
+    description: "Botanical compositions blending organic form and digital light.",
+    artworks: [
+      roomArtwork(
+        "flower-neural-bloom",
+        "Neural Bloom",
+        "Elena Vasquez",
+        "2025",
+        "Generative digital flora",
+        "A living bouquet simulated through procedural growth and light.",
+        images.featureNavigation,
+        0,
+      ),
+      roomArtwork(
+        "flower-vernal-study",
+        "Vernal Study",
+        "Amara Okafor",
+        "2024",
+        "Chromatic photo composition",
+        "Seasonal petals arranged as a rhythm of color and shadow.",
+        images.artist1,
+        1,
+      ),
+      roomArtwork(
+        "flower-sunlit-petals",
+        "Sunlit Petals",
+        "Marcus Chen",
+        "2025",
+        "Digital macro painting",
+        "Close-up petals translated into painterly gradients.",
+        images.artist2,
+        2,
+      ),
+      roomArtwork(
+        "flower-quiet-garden",
+        "Quiet Garden",
+        "James Whitfield",
+        "2023",
+        "Hybrid archival print",
+        "A contemplative floral arrangement in a tranquil composition.",
+        images.artist3,
+        3,
+      ),
+      roomArtwork(
+        "flower-midnight-orchid",
+        "Midnight Orchid",
+        "Elena Vasquez",
+        "2026",
+        "Luminous digital canvas",
+        "Orchid silhouettes suspended in deep blue atmospheric light.",
+        images.artist4,
+        4,
+      ),
+    ],
+  },
+  {
+    id: "museum",
+    title: "Museum Room",
+    description: "Architectural halls, restored interiors, and timeless exhibition spaces.",
+    artworks: [
+      roomArtwork(
+        "museum-grand-hall",
+        "Grand Hall",
+        "James Whitfield",
+        "2025",
+        "Cinematic restoration",
+        "A monumental gallery hall rendered with immersive depth.",
+        images.hero,
+        0,
+      ),
+      roomArtwork(
+        "museum-renaissance-light",
+        "Renaissance Light",
+        "James Whitfield",
+        "2025",
+        "Digital restoration",
+        "Classical architecture relit for a contemporary audience.",
+        images.renaissance,
+        1,
+      ),
+      roomArtwork(
+        "museum-sculpture-wing",
+        "Sculpture Wing",
+        "Amara Okafor",
+        "2024",
+        "Architectural light study",
+        "A corridor of stone and light focused on spatial serenity.",
+        images.sculptureHall,
+        2,
+      ),
+      roomArtwork(
+        "museum-modern-galleria",
+        "Modern Galleria",
+        "Marcus Chen",
+        "2026",
+        "Interior visualization",
+        "A contemporary exhibition space with clean axial geometry.",
+        images.exhibition,
+        3,
+      ),
+      roomArtwork(
+        "museum-digital-vault",
+        "Digital Vault",
+        "Elena Vasquez",
+        "2024",
+        "Museum concept render",
+        "A vaulted room where artifacts and media narratives converge.",
+        images.virtualExperience,
+        4,
+      ),
+    ],
+  },
+  {
+    id: "abstract-art",
+    title: "Abstract Art Room",
+    description: "Expressive color fields and experimental compositions.",
+    artworks: [
+      roomArtwork(
+        "abstract-chromatic-drift",
+        "Chromatic Drift",
+        "Marcus Chen",
+        "2024",
+        "Algorithmic abstraction",
+        "Color bands migrate and dissolve across a simulated canvas.",
+        images.featureCollections,
+        0,
+      ),
+      roomArtwork(
+        "abstract-digital-futures",
+        "Digital Futures",
+        "Marcus Chen",
+        "2025",
+        "Neural landscape",
+        "Latent-space topographies translated into abstract terrain.",
+        images.digitalFutures,
+        1,
+      ),
+      roomArtwork(
+        "abstract-echo",
+        "Abstract Echo",
+        "Elena Vasquez",
+        "2024",
+        "Mixed digital media",
+        "Historic gestures transformed into computational mark-making.",
+        images.abstractArt,
+        2,
+      ),
+      roomArtwork(
+        "abstract-spectrum-flow",
+        "Spectrum Flow",
+        "Amara Okafor",
+        "2026",
+        "Light and pigment simulation",
+        "Prismatic trails bend through layered abstract forms.",
+        images.featureGlobal,
+        3,
+      ),
+      roomArtwork(
+        "abstract-silent-fragments",
+        "Silent Fragments",
+        "James Whitfield",
+        "2023",
+        "Digital collage",
+        "Fragmented planes arranged in meditative asymmetry.",
+        images.featureStorytelling,
+        4,
+      ),
+    ],
+  },
+  {
+    id: "sculpture",
+    title: "Sculpture Room",
+    description: "Form, mass, and negative space captured through digital sculpture studies.",
+    artworks: [
+      roomArtwork(
+        "sculpture-void-study",
+        "Void Sculpture",
+        "James Whitfield",
+        "2023",
+        "Photogrammetry sculpture",
+        "Classical form eroded into a contemporary monument.",
+        images.featureStorytelling,
+        0,
+      ),
+      roomArtwork(
+        "sculpture-chamber",
+        "Sculpture Chamber",
+        "James Whitfield",
+        "2023",
+        "Digital marble installation",
+        "Monolithic forms arranged around a dramatic central axis.",
+        images.sculptureHall,
+        1,
+      ),
+      roomArtwork(
+        "sculpture-suspended-mass",
+        "Suspended Mass",
+        "Elena Vasquez",
+        "2025",
+        "3D sculptural rendering",
+        "A hovering form balanced by shadow and reflected light.",
+        images.featurePurchasing,
+        2,
+      ),
+      roomArtwork(
+        "sculpture-column-study",
+        "Column Study",
+        "Amara Okafor",
+        "2024",
+        "Architectural sculpture study",
+        "Vertical stone rhythm interpreted with digital atmosphere.",
+        images.renaissance,
+        3,
+      ),
+      roomArtwork(
+        "sculpture-monolith-field",
+        "Monolith Field",
+        "Marcus Chen",
+        "2026",
+        "Parametric sculpture",
+        "A field of sculpted solids staged in cinematic perspective.",
+        images.exhibition,
+        4,
+      ),
+    ],
+  },
+];

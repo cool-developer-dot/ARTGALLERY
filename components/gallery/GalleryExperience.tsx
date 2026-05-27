@@ -17,7 +17,7 @@ import { useWheelZoom } from "@/hooks/useWheelZoom";
 import { usePointerDepth } from "@/hooks/usePointerDepth";
 import { useTouchTablet } from "@/hooks/useTouchTablet";
 import {
-  galleryDesktopRows,
+  galleryMainRoomCollections,
   type GalleryArtwork,
 } from "@/lib/galleryArtworks";
 import { artworkSpring, galleryZoomSpring } from "@/lib/motion";
@@ -111,8 +111,10 @@ export function GalleryExperience() {
     setMotionEnabled(true);
   }, [tiltSupported, requestPermission, calibrate, resetSpatial]);
 
-  const [rowTop, rowBottom, rowCenter] = galleryDesktopRows;
-  let slotIndex = 0;
+  const desktopArtworkCount = galleryMainRoomCollections.reduce(
+    (total, room) => total + room.artworks.length,
+    0,
+  );
 
   return (
     <div
@@ -231,51 +233,45 @@ export function GalleryExperience() {
                 />
               ) : (
                 <div
-                  className="relative flex flex-col gap-16 sm:gap-20 md:gap-28"
+                  className="relative flex flex-col gap-10 sm:gap-12 md:gap-14"
                   style={{ transformStyle: "preserve-3d" }}
                 >
-                  <div className="grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-8 md:gap-12">
-                    {rowTop.map((art) => {
-                      const i = slotIndex++;
-                      return (
-                        <GalleryArtworkSlot
-                          key={art.id}
-                          art={art}
-                          index={i}
-                          onSelect={() => setSelected(art)}
-                        />
-                      );
-                    })}
+                  <div className="glass-panel border border-white/10 px-6 py-5 sm:px-8 sm:py-6">
+                    <p className="type-caption">Main Room</p>
+                    <h2 className="mt-2 type-display-sm">Curated Gallery Halls</h2>
+                    <p className="mt-2 max-w-2xl text-sm text-stone-body">
+                      Explore four distinct rooms. Each room features a focused
+                      collection in the same immersive frame style.
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8 md:gap-12">
-                    {rowBottom.map((art) => {
-                      const i = slotIndex++;
-                      return (
-                        <GalleryArtworkSlot
-                          key={art.id}
-                          art={art}
-                          index={i}
-                          onSelect={() => setSelected(art)}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex justify-center pt-4 sm:pt-8">
-                    {rowCenter.map((art) => {
-                      const i = slotIndex++;
-                      return (
-                        <div key={art.id} className="w-full max-w-[380px]">
-                          <GalleryArtworkSlot
-                            art={art}
-                            index={i}
-                            onSelect={() => setSelected(art)}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {galleryMainRoomCollections.map((room, roomIndex) => (
+                    <section
+                      key={room.id}
+                      className="glass-panel border border-white/10 px-5 py-6 sm:px-6 sm:py-7"
+                    >
+                      <div className="mb-6 sm:mb-7">
+                        <p className="type-caption">
+                          Room {String(roomIndex + 1).padStart(2, "0")}
+                        </p>
+                        <h3 className="mt-2 type-display-sm">{room.title}</h3>
+                        <p className="mt-2 max-w-3xl text-sm text-stone-body">
+                          {room.description}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 lg:gap-10">
+                        {room.artworks.map((art, artIndex) => (
+                          <div key={art.id} className="w-full">
+                            <GalleryArtworkSlot
+                              art={art}
+                              index={roomIndex * 6 + artIndex}
+                              onSelect={() => setSelected(art)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
                 </div>
               )}
             </div>
@@ -296,7 +292,7 @@ export function GalleryExperience() {
         <p className="type-caption glass-panel px-4 py-2">
           {isTouchTablet
             ? `${Math.round(zoom * 100)}% · ${spatialIndex}/9 · H ${hSpeed.toFixed(1)}× · V ${vSpeed.toFixed(1)}×`
-            : `${Math.round(zoom * 100)}% zoom · 9 works`}
+            : `${Math.round(zoom * 100)}% zoom · ${desktopArtworkCount} works`}
         </p>
       </div>
 
